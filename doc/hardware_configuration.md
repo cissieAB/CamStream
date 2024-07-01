@@ -9,6 +9,7 @@
 # Software Configuration for IMx477
 
 1. For Raspberry Pi Bookworm/Bullseye users running on Pi 4, please execute: 
+
 > sudo nano /boot/firmware/config.txt 
 >#Find the line: camera_auto_detect=1, update it to:
 >camera_auto_detect=0
@@ -17,5 +18,6 @@
 >#Save and reboot.
 
 2. Navigate to the termial and run the command:
+
 >libcamera-still -t0
 
