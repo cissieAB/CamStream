@@ -8,6 +8,9 @@ import cv2
 import logging
 import cmapy
 from scipy import ndimage
+from libcamera import Transform
+import matplotlib
+import threading
 
 
 
@@ -144,7 +147,7 @@ def _process_raw_image(self):
      picamera2_image = picam2.capture_array()
      picam2.stop()
     
-    def blend_images()
+    def blend_images():
  
      # Ensure the captured image is in BGR format (OpenCV format)
      picamera2_image = cv2.cvtColor(picamera2_image, cv2.COLOR_RGB2BGR)

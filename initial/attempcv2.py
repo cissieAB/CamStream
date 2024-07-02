@@ -41,8 +41,8 @@ def capture_picam(stop_event, frame_queue):
 
 # blending
 # play around with numbers to change gradiant
-source_ptc = cv2.imread(self._image)
-source_hd = cv2.imread(libcamera-still)
-blend = cv2.addWeighted(source_ptc, 1, source_hd, 1, 0.0)
+#source_ptc = cv2.imread(self._image)
+#source_hd = cv2.imread(libcamera-still)
+#blend = cv2.addWeighted(source_ptc, 1, source_hd, 1, 0.0)
 
 # now figure out how to loop/buffer?
