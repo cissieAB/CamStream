@@ -90,10 +90,18 @@ class pithermalcam:
             self._raw_image = np.zeros((24 * 32,))
             logger.info(traceback.format_exc())
 
-    def _temps_to_rescaled_uints(self, raw_image, temp_min, temp_max):
-        """Convert temperature values to scaled unsigned integers."""
-        scaled = 255 * (raw_image - temp_min) / (temp_max - temp_min)
-        return np.clip(scaled, 0, 255).astype(np.uint8)
+    def _temps_to_rescaled_uints(self, raw_image, temp_min, temp_max,  scale_min=20, scale_max=60):
+        
+        #Convert temperature values to scaled unsigned integers
+        scale_range = (scale_max - scale_min)
+        normalized = (raw_image - temp_min) / (temp_max - temp_min)
+
+        #scale normalized to target temp range
+        scaled = scale_min + normalized * scale_range
+        
+        rescaled = 255*(scaled - scale_min)/(scale_range)
+
+        return np.clip(rescaled, 0, 255).astype(np.uint8)
 
     def process_thermal_image(self):
         """Process the raw temp data to a colored image. Filter if necessary"""
@@ -133,7 +141,7 @@ class pithermalcam:
         
 def video_init(picam2):
         """Capture image from picamera2"""
-        config =picam2.create_video_configuration(main={"format": "RGB888", "size": (800, 600)})
+        config = picam2.create_video_configuration(main={"format": "RGB888", "size": (800, 600)})
         picam2.configure(config)
         picam2.start()
         return picam2
