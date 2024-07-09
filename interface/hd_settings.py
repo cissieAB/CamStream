@@ -7,7 +7,7 @@ from pynput import keyboard
 picam2 = Picamera2()
 camera_running = False
 config = picam2.create_preview_configuration()
-configured = True
+picam2.confingure(config)
 
 # config = picam2.create_preview_configuration()
 # main: Any = {},

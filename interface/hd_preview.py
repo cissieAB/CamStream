@@ -9,14 +9,15 @@ import keyboard
 global camera_running
 global picam2
 global preview_on
-config = picam2.create_preview_configuration()
 global configured
+global i
 i=0
 
 picam2 = Picamera2()
 camera_running = False
 preview_on = False
 configured = False
+config = picam2.create_preview_configuration()
 
 
 # config = picam2.create_preview_configuration()
@@ -48,6 +49,7 @@ configured = False
 
 
 def toggle_cam():
+	global i, camera_running, picam2, preview_on
 	try:
 		if i == 0:
 			hd_cam_on()
@@ -69,6 +71,7 @@ def toggle_cam():
 		picam2.stop()
 
 def hd_cam_off():
+	global i, camera_running, picam2, preview_on
 	if preview_on == True:
 		picam2.stop_preview()
 		preview_on = False
@@ -76,6 +79,7 @@ def hd_cam_off():
 
 
 def hd_cam_on():
+	global i, camera_running, picam2, configured, preview_on
 	if configured == False:
 		picam2.configure(config)
 		configured = True
@@ -100,7 +104,6 @@ def hd_settings():
 	global configured
 	config = picam2.create_preview_configuration()
 	
-
 	try: 
 		if configured:
 			print(config['main'])
@@ -142,9 +145,10 @@ def hd_settings():
 
 
 def exit():
+	global i, camera_running, picam2, preview_on
 	print(" Exiting")
 	if preview_on == True:
-			picam2.stop_preview()
+		picam2.stop_preview()
 	picam2.stop()
 	picam2.close()
 	
