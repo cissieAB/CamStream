@@ -8,3 +8,4 @@ picam2 = Picamera2()
 camera_running = False
 config = picam2.create_preview_configuration()
 picam2.confingure(config)
+#hi

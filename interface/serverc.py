@@ -3,13 +3,14 @@
 from flask import Flask, Response, render_template
 import threading
 import time
-import io
 import cv2
 from picamera2 import Picamera2
-try:  # If called as an imported module
-	from pithermalcam import pithermalcam
-except:  # If run directly
-	from pi_therm_cam import pithermalcam
+
+# Try to import the thermal camera module
+try:
+    from pithermalcam import pithermalcam
+except ImportError:
+    from pi_therm_cam import pithermalcam
 
 app = Flask(__name__)
 
@@ -32,14 +33,17 @@ def capture_hd_frames():
     picam2_hd.start()
 
     while True:
-        image_hd = picam2_hd.capture_array()
-        height, width, channels = image_hd.shape
-        start_x = (width - CROP_WIDTH) // 2
-        start_y = (height - CROP_HEIGHT) // 2
-        cropped_hd_image = image_hd[start_y:start_y+CROP_HEIGHT, start_x:start_x+CROP_WIDTH]
-        cropped_hd_image = cv2.cvtColor(cropped_hd_image, cv2.COLOR_BGR2RGB)
-        with hd_lock:
-            hd_output_frame = cropped_hd_image.copy()
+        try:
+            image_hd = picam2_hd.capture_array()
+            height, width, channels = image_hd.shape
+            start_x = (width - CROP_WIDTH) // 2
+            start_y = (height - CROP_HEIGHT) // 2
+            cropped_hd_image = image_hd[start_y:start_y + CROP_HEIGHT, start_x:start_x + CROP_WIDTH]
+            cropped_hd_image = cv2.cvtColor(cropped_hd_image, cv2.COLOR_BGR2RGB)
+            with hd_lock:
+                hd_output_frame = cropped_hd_image.copy()
+        except Exception as e:
+            print(f"Error capturing HD frame: {e}")
 
 # Thermal Camera Thread and Functionality
 def pull_images():
@@ -48,10 +52,13 @@ def pull_images():
     time.sleep(0.1)
 
     while True:
-        current_frame = thermcam.update_image_frame()
-        if current_frame is not None:
-            with thermal_lock:
-                thermal_output_frame = current_frame.copy()
+        try:
+            current_frame = thermcam.update_image_frame()
+            if current_frame is not None:
+                with thermal_lock:
+                    thermal_output_frame = current_frame.copy()
+        except Exception as e:
+            print(f"Error capturing thermal frame: {e}")
 
 # Flask Routes
 @app.route("/")
