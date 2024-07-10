@@ -31,15 +31,15 @@ def estimate_distance(focus_value):
     distance = min_distance + (1000 - focus_value) * (max_distance - min_distance) / 1000
     return distance
 
-def main():
+def main(): #CHECK WITH SERVER sensor size?
     # Initialize Picamera2
     picam2 = Picamera2()
-    config = picam2.create_still_configuration()
+    config = picam2.create_preview_configuration(main={"Size":(640, 480)})
     picam2.configure(config)
     picam2.start()
 
     # preview (if needed)
-    picam2.start_preview(Preview.NULL) #
+    #picam2.start_preview(Preview.NULL) #
     picam2.set_controls({"Resolution": (640, 480)})
     time.sleep(0.1)
     print("Start focusing")
