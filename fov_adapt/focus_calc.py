@@ -19,8 +19,8 @@ def laplacian(img):
     img_laplacian = cv2.Laplacian(img_gray, cv2.CV_16U)
     return cv2.mean(img_laplacian)[0]
 
-def calculate_focus(camera):
-    image = camera.capture_array()
+def calculate_focus(picam2):
+    image = picam2.capture_array()
     return laplacian(image)
 
 def estimate_distance(focus_value):
