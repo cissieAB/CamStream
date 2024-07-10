@@ -19,8 +19,8 @@ def laplacian(img):
     img_laplacian = cv2.Laplacian(img_gray, cv2.CV_16U)
     return cv2.mean(img_laplacian)[0]
 
-def calculate_focus(picam2):
-    image = picam2.capture_array()
+def calculate_focus(hd_cam):
+    image = hd_cam.capture_array()
     return laplacian(image)
 
 def estimate_distance(focus_value):
@@ -39,7 +39,7 @@ def main(): #CHECK WITH SERVER sensor size?
     picam2.start()
 
     # preview (if needed)
-    #picam2.start_preview(Preview.NULL) #
+    # picam2.start_preview(Preview.NULL) #
     picam2.set_controls({"Resolution": (640, 480)})
     time.sleep(0.1)
     print("Start focusing")
@@ -85,7 +85,7 @@ def main(): #CHECK WITH SERVER sensor size?
             if focal_distance > 1000:
                 break
 
-        # Adjust focus to best
+        # adjust focus to best
         focusing(max_index)
         time.sleep(1)  # allow for focus adjustment
 
