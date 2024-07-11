@@ -83,8 +83,12 @@ class pithermalcam:
         self._raw_image = np.zeros((24*32,))
         try:
             self.mlx.getFrame(self._raw_image)  # read mlx90640
-            self._temp_min = np.min(self._raw_image)
-            self._temp_max = np.max(self._raw_image)
+            
+            # self._temp_min = np.min(self._raw_image)
+            # self._temp_max = np.max(self._raw_image)
+            self._temp_min = 20
+            self._temp_max = 38
+
             self._raw_image=self._temps_to_rescaled_uints(self._raw_image,self._temp_min,self._temp_max)
             self._current_frame_processed=False  # Note that the newly updated raw frame has not been processed
         except ValueError:
@@ -252,51 +256,42 @@ class pithermalcam:
         self._file_saved_notification_start = time.monotonic()
         print('Thermal Image ', fname)
 
-    # def _temps_to_rescaled_uints(self,f,Tmin,Tmax):
-    #     """Function to convert temperatures to pixels on image"""
-    #     f=np.nan_to_num(f)
-    #     norm = np.uint8((f - Tmin)*255/(Tmax-Tmin))
-    #     norm.shape = (24,32)
-    #     return norm
 
-    # def _temps_to_rescaled_uints(self,raw_image, Tmin, Tmax, scale_min=20, scale_max=60):
-    #     scale_range = (scale_max - scale_min)
+    # def _temps_to_rescaled_uints2(self, raw_image, Tmin, Tmax, scale_min=20, scale_max=60):
+    #     """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius by default."""
+    #     scale_range = scale_max - scale_min
     #     normalized = (raw_image - Tmin) / (Tmax - Tmin)
-
-    #     # Scale normalized to target temp range
     #     scaled = scale_min + normalized * scale_range
     #     rescaled = 255 * (scaled - scale_min) / scale_range
-    #     rescaled = np.clip(rescaled, 0, 255).astype(np.uint8)
-    #     rescaled.shape = (24, 32)
+    #     rescaled = np.clip(rescaled, 0, 255)
+    #     norm = rescaled.astype(np.uint8)
+    #    norm.shape = (24, 32)
+        
 
-    #     return rescaled
-
-            # self._temp_min = np.min(self._raw_image)
-            # self._temp_max = np.max(self._raw_image)
-            # self._raw_image=self._temps_to_rescaled_uints(self._raw_image,self._temp_min,self._temp_max)
-  
-
-    # def _temps_to_rescaled_uints(self, f):
-    #     Tmin = 20.0
-    #     Tmax = 60.0
-    #     f = np.nan_to_num(f)
-    #     norm = np.uint8((f - Tmin) * 255 / (Tmax - Tmin))
-    #     norm.shape = (24, 32)
     #     return norm
     
+    def _temps_to_rescaled_uints(self, raw_image, scale_min=20, scale_max=60, temp_threshold=37):
+        """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius and map values below a threshold."""
 
-    def _temps_to_rescaled_uints2(self, raw_image, Tmin, Tmax, scale_min=20, scale_max=60):
-        """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius by default."""
+        if self._temp_min is None or self._temp_max is None:
+            raise ValueError("Temperature range not initialized. Call update_temperature_range first.")
+        
         scale_range = scale_max - scale_min
         normalized = (raw_image - Tmin) / (Tmax - Tmin)
         scaled = scale_min + normalized * scale_range
         rescaled = 255 * (scaled - scale_min) / scale_range
-        rescaled = np.clip(rescaled, 0, 255)
-        norm = rescaled.astype(np.uint8)
-        norm.shape = (24, 32)
-        
 
-        return norm
+        # Create a mask where temperatures below the threshold are set to self._temp_min
+        mask = raw_image < temp_threshold
+        # Map temperatures below the threshold to self._temp_min
+        rescaled_below_threshold = 255 * ((self._temp_min - self._temp_min) / (self._temp_max - self._temp_min))
+        filtered_rescaled = np.where(mask, rescaled_below_threshold, rescaled)
+
+        filtered_rescaled = np.clip(filtered_rescaled, 0, 255)
+        filtered_rescaled = filtered_rescaled.astype(np.uint8)
+        filtered_rescaled.shape = (24, 32)
+
+        return filtered_rescaled
     
     # import numpy as np
 
