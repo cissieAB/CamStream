@@ -259,17 +259,27 @@ class pithermalcam:
     #     norm.shape = (24,32)
     #     return norm
 
-    def _temps_to_rescaled_uints(self,raw_image, Tmin, Tmax, scale_min=20, scale_max=60):
-        scale_range = (scale_max - scale_min)
-        normalized = (raw_image - Tmin) / (Tmax - Tmin)
+    # def _temps_to_rescaled_uints(self,raw_image, Tmin, Tmax, scale_min=20, scale_max=60):
+    #     scale_range = (scale_max - scale_min)
+    #     normalized = (raw_image - Tmin) / (Tmax - Tmin)
 
-        # Scale normalized to target temp range
-        scaled = scale_min + normalized * scale_range
-        rescaled = 255 * (scaled - scale_min) / scale_range
-        rescaled = np.clip(rescaled, 0, 255).astype(np.uint8)
-        rescaled.shape = (24, 32)
+    #     # Scale normalized to target temp range
+    #     scaled = scale_min + normalized * scale_range
+    #     rescaled = 255 * (scaled - scale_min) / scale_range
+    #     rescaled = np.clip(rescaled, 0, 255).astype(np.uint8)
+    #     rescaled.shape = (24, 32)
 
-        return rescaled
+    #     return rescaled
+  
+
+    def _temps_to_rescaled_uints(self, f):
+        Tmin = 20.0
+        Tmax = 60.0
+        f = np.nan_to_num(f)
+        norm = np.uint8((f - Tmin) * 255 / (Tmax - Tmin))
+        norm.shape = (24, 32)
+        return norm
+
     
     def display_camera_onscreen(self):
         # Loop to display frames unless/until user requests exit

@@ -15,17 +15,16 @@ except: # If run directly
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-# Global variables for HD and Thermal camera frames
 hd_output_frame = None
 thermal_output_frame = None
 hd_lock = threading.Lock()
 thermal_lock = threading.Lock()
 
-# Define the desired crop dimensions
+# crop dimensions
 CROP_WIDTH = 550
 CROP_HEIGHT = 280
 
-# HD Camera Thread and Functionality
+
 def capture_hd_frames():
     global hd_output_frame, hd_lock
     picam2_hd = Picamera2()
@@ -43,8 +42,7 @@ def capture_hd_frames():
         with hd_lock:
             hd_output_frame = cropped_hd_image.copy()
 
-# Thermal Camera Thread and Functionality
-def pull_images(): #pull thermal
+def pull_images(): # pull thermal
     global thermal_output_frame, thermal_lock
     thermcam = pithermalcam(output_folder='/home/pi/pithermalcam/saved_snapshots/')
     time.sleep(0.1)
@@ -75,14 +73,14 @@ def generate():
         if hd_frame is None or thermal_frame is None:
             continue
         
-        # Resize frames if needed to display side by side
+        # resize frames (if needed) to display side by side
         hd_frame = cv2.resize(hd_frame, (320, 240))
         thermal_frame = cv2.resize(thermal_frame, (320, 240))
         
-        # Combine frames horizontally
+        # combine frames horizontally
         combined_frame = cv2.hconcat([hd_frame, thermal_frame])
 
-        # Encode combined frame
+        # encode combined frame
         (flag, encoded_image) = cv2.imencode(".jpg", combined_frame)
         if not flag:
             continue
@@ -94,15 +92,15 @@ def video_feed():
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 if __name__ == '__main__':
-    # Start HD camera thread
+    # start HD camera thread
     hd_thread = threading.Thread(target=capture_hd_frames)
     hd_thread.daemon = True
     hd_thread.start()
 
-    # Start Thermal camera thread
+    # start thermal thread
     thermal_thread = threading.Thread(target=pull_images)
     thermal_thread.daemon = True
     thermal_thread.start()
 
-    # Run Flask app
+    # run Flask app
     socketio.run(app, host='0.0.0.0', port=8010, debug=True, use_reloader=False)
