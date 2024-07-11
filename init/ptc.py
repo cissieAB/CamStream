@@ -279,27 +279,23 @@ class pithermalcam:
         norm = np.uint8((f - Tmin) * 255 / (Tmax - Tmin))
         norm.shape = (24, 32)
         return norm
+    
+
+    def _temps_to_rescaled_uints2(self, raw_image, Tmin, Tmax, scale_min=20, scale_max=60):
+        """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius by default."""
+        scale_range = scale_max - scale_min
+        normalized = (raw_image - Tmin) / (Tmax - Tmin)
+        scaled = scale_min + normalized * scale_range
+        rescaled = 255 * (scaled - scale_min) / scale_range
+        print(f"Before clipping: {rescaled}")
+        rescaled = np.clip(rescaled, 0, 255)
+        print(f"After clipping: {rescaled}")
+        norm = rescaled.astype(np.uint8)
+        print(f"After converting to uint8: {rescaled}")
+        norm.shape = (24, 32)
+        print(f"After reshaping: {rescaled.shape}")
+
+        return norm
+
 
     
-    def display_camera_onscreen(self):
-        # Loop to display frames unless/until user requests exit
-        while not self._exit_requwhaested:
-            try:
-                self.display_next_frame_onscreen()
-            # Catch a common I2C Error. If you get this too often consider checking/adjusting your I2C Baudrate
-            except RuntimeError as e:
-                if e.message == 'Too many retries':
-                    print("Too many retries error caught, potential I2C baudrate issue: continuing...")
-                    continue
-                raise
-
-if __name__ == "__main__":
-    # If class is run as main, read ini and set up a live feed displayed to screen
-    output_folder = '/home/pi/PiThermalCam/saved_snapshots/'
-
-    thermcam = pithermalcam(output_folder=output_folder)  # Instantiate class
-    thermcam.display_camera_onscreen()
-
-
-
-
