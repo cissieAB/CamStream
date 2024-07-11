@@ -84,8 +84,8 @@ class pithermalcam:
         try:
             self.mlx.getFrame(self._raw_image)  # read mlx90640
             
-            # self._temp_min = np.min(self._raw_image)
-            # self._temp_max = np.max(self._raw_image)
+            self._real_temp_min_ = np.min(self._raw_image)
+            self._real_temp_max = np.max(self._raw_image)
             self._temp_min = 20
             self._temp_max = 38
 
@@ -269,29 +269,57 @@ class pithermalcam:
         
 
     #     return norm
-    
-    def _temps_to_rescaled_uints(self, raw_image, scale_min=20, scale_max=60, temp_threshold=37):
-        """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius and map values below a threshold."""
 
-        if self._temp_min is None or self._temp_max is None:
-            raise ValueError("Temperature range not initialized. Call update_temperature_range first.")
+    # def _temps_to_rescaled_uints(self, raw_image, Tmin, Tmax, scale_min=20, scale_max=60, temp_threshold=37):
+    #     """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius and map values below a threshold."""
+
+    #     if self._temp_min is None or self._temp_max is None:
+    #         raise ValueError("Temperature range not initialized. Call update_temperature_range first.")
         
+    #     scale_range = scale_max - scale_min
+    #     mask = raw_image < temp_threshold
+    #     mask = Tmin
+    #     normalized = (raw_image - Tmin) / (Tmax - Tmin)
+    #     scaled = scale_min + normalized * scale_range
+    #     rescaled = 255 * (scaled - scale_min) / scale_range
+
+    #     # Create a mask where temperatures below the threshold are set to self._temp_min
+    #     mask = raw_image < temp_threshold
+    #     # Map temperatures below the threshold to self._temp_min
+    #     rescaled_below_threshold = 255 * ((self._temp_min - self._temp_min) / (self._temp_max - self._temp_min))
+    #     filtered_rescaled = np.where(mask, rescaled_below_threshold, rescaled)
+
+    #     filtered_rescaled = np.clip(filtered_rescaled, 0, 255)
+    #     filtered_rescaled = filtered_rescaled.astype(np.uint8)
+    #     filtered_rescaled.shape = (24, 32)
+
+    #     return filtered_rescaled
+        
+    def _temps_to_rescaled_unit(self, Tmin, Tmax, raw_image, scale_min=20, scale_max=60, temp_threshold=30 ):
+        """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius 
+        and set values below a threshold to be fully transparent."""
+        # if self._temp_min is None or self._temp_max is None:
+        #     raise ValueError("Temperature range not initialized. Call update_temperature_range first.")
+
         scale_range = scale_max - scale_min
-        normalized = (raw_image - Tmin) / (Tmax - Tmin)
+        normalized = (raw_image - Tmin) / (self._temp_max - Tmax)
         scaled = scale_min + normalized * scale_range
         rescaled = 255 * (scaled - scale_min) / scale_range
 
-        # Create a mask where temperatures below the threshold are set to self._temp_min
+        # Create a mask where temperatures are below the threshold
         mask = raw_image < temp_threshold
-        # Map temperatures below the threshold to self._temp_min
-        rescaled_below_threshold = 255 * ((self._temp_min - self._temp_min) / (self._temp_max - self._temp_min))
-        filtered_rescaled = np.where(mask, rescaled_below_threshold, rescaled)
 
-        filtered_rescaled = np.clip(filtered_rescaled, 0, 255)
-        filtered_rescaled = filtered_rescaled.astype(np.uint8)
-        filtered_rescaled.shape = (24, 32)
+        # Initialize an image with 4 channels (RGBA), where A is the alpha channel
+        rgba_image = np.zeros((24, 32, 4), dtype=np.uint8)
 
-        return filtered_rescaled
+        # Set RGB channels (assuming RGB value for rescaled temperatures)
+        rgba_image[:, :, :3] = np.stack([rescaled, rescaled, rescaled], axis=-1)
+
+        # Set alpha channel: 255 for visible pixels, 0 for transparent pixels
+        rgba_image[:, :, 3] = np.where(mask, 0, 255)
+
+        return rgba_image
+
     
     # import numpy as np
 
