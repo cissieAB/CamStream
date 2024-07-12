@@ -136,9 +136,9 @@ class pithermalcam:
             self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
             self._image = cv2.resize(self._image, (800,600), interpolation=self._interpolation_list[self._interpolation_index])
 
-        self._image = cv2.cvtColor(self._image, cv2.COLOR_BGR2BGRA)
-        self._image[:, :, 3] = np.where(self._raw_image == 0, 0, 225)
-        self._image = cv2.flip(self._image, 1)
+        # self._image = cv2.cvtColor(self._image, cv2.COLOR_BGR2BGRA)
+        # self._image[:, :, 3] = np.where(self._raw_image == 0, 0, 225)
+        # self._image = cv2.flip(self._image, 1)
 
         if self.filter_image:
             self._image=cv2.bilateralFilter(self._image,15,80,80)
@@ -279,75 +279,38 @@ class pithermalcam:
         fname = self.output_folder + 'pic_' + dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.jpg'
         cv2.imwrite(fname, self._image)
         self._file_saved_notification_start = time.monotonic()
-        print('Thermal Image ', fname)
-
+        print('Thermal Image ', fname)   
+      
+    def _temps_to_rescaled_units(self,f, Tmin, Tmax):   
+        """ Function to convert temperatures to pixels on image"""
+        f=np.nan_to_num(f)
+        norm = np.uint8((f - Tmin)*255/(Tmax-Tmin))
+        norm.shape = (24,32)
+        return norm
         
-    # def _temps_to_rescaled_uints(self, raw_image, Tmin, Tmax, scale_min=32, scale_max=0, temp_threshold = 36):
-    
-    #     """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius by default."""
-    #     scale_range = scale_max - scale_min
-    #     normalized = (raw_image - Tmin) / (Tmax - Tmin)
-    #     scaled = scale_min + normalized * scale_range
-    #     norm = 255 * (scaled - scale_min) / scale_range
-        
+        # """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius 
+        # and set values below a threshold to be fully transparent."""
+        # # if self._temp_min is None or self._temp_max is None:
+        # #     raise ValueError("Temperature range not initialized. Call update_temperature_range first.")
+        # scale_min = 20
+        # scale_max = 40
+        # scale_range = scale_max - scale_min
+        # temp_threshold = 36
 
-    #     mask = raw_image >= temp_threshold
-    #     masked_norm = np.where(mask, norm, 0)
-
-    #     masked_norm = np.clip(norm, 0, 255)
-    #     masked_norm = masked_norm.astype(np.uint8)
-    #     masked_norm.shape = (24, 32)
+        # f[f < temp_threshold] = np.nan
+        # f = np.nan_to_num(f, nan = -1)
 
 
-    #     return masked_norm
+        # norm = (f - Tmin) / (f - Tmax)
+        # scaled = scale_min + norm * scale_range
+        # rescaled = 255 * (scaled - scale_min) / scale_range
 
-    # def _temps_to_rescaled_uints(self, Tmin, Tmax, raw_image, scale_min=20, scale_max=60, temp_threshold=37):
-    #     """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius and map values below a threshold."""
-
-    #     if self._temp_min is None or self._temp_max is None:
-    #         raise ValueError("Temperature range not initialized. Call update_temperature_range first.")
-        
-    #     scale_range = scale_max - scale_min
-    #     normalized = (raw_image - Tmin) / (Tmax - Tmin)
-    #     scaled = scale_min + normalized * scale_range
-    #     rescaled = 255 * (scaled - scale_min) / scale_range
-        
-
-    #     # Create a mask where temperatures below the threshold are set to self._temp_min
-    #     mask = raw_image < temp_threshold
-    #     # Map temperatures below the threshold to self._temp_min
-    #     rescaled_below_threshold = 255 * ((self._temp_min - self._temp_min) / (self._temp_max - self._temp_min))
-    #     filtered_rescaled = np.where(mask, rescaled_below_threshold, rescaled)
-
-    #     filtered_rescaled = np.clip(filtered_rescaled, 0, 255)
-    #     filtered_rescaled = filtered_rescaled.astype(np.uint8)
-    #     filtered_rescaled.shape = (24, 32)
-
-    #     return filtered_rescaled
-
-    def _temps_to_rescaled_units(self,f, Tmin, Tmax):
-        """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius 
-        and set values below a threshold to be fully transparent."""
-        # if self._temp_min is None or self._temp_max is None:
-        #     raise ValueError("Temperature range not initialized. Call update_temperature_range first.")
-        scale_min = 20
-        scale_max = 40
-        scale_range = scale_max - scale_min
-        temp_threshold = 36
-
-        f[f < temp_threshold] = np.nan
-        f = np.nan_to_num(f, nan = -1)
-
-
-        norm = (f - Tmin) / (f - Tmax)
-        scaled = scale_min + norm * scale_range
-        rescaled = 255 * (scaled - scale_min) / scale_range
-
-        norm = np.uint8(rescaled)
-        norm[f == -1] = 0
-        norm.shape(24,32)
+        # norm = np.uint8(rescaled)
+        # norm[f == -1] = 0
+        # norm.shape(24,32)
 
         return norm
+    
 
     def display_camera_onscreen(self):
         # Loop to display frames unless/until user requests exit
