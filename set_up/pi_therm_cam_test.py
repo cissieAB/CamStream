@@ -102,30 +102,23 @@ class pithermalcam:
             self._raw_image = np.zeros((24*32,))  # If something went wrong, make sure the raw image has numbers
             logger.info(traceback.format_exc())
 
+        # def _process_raw_image(self):
+        #     """Process the raw temp data to a colored image. Filter if necessary"""
+        #     # Image processing
+        #     # Can't apply colormap before ndimage, so reversed in first two options, even though it seems slower
+        #     if self._interpolation_index==5:  # Scale via scipy only - slowest but seems higher quality
+        #         self._image = ndimage.zoom(self._raw_image,25)  # interpolate with scipy
+        #         self._image = cv2.applyColorMap(self._image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+        #     elif self._interpolation_index==6:  # Scale partially via scipy and partially via cv2 - mix of speed and quality
+        #         self._image = ndimage.zoom(self._raw_image,10)  # interpolate with scipy
+        #         self._image = cv2.applyColorMap(self._image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+        #         self._image = cv2.resize(self._image, (800,600), interpolation=cv2.INTER_CUBIC)
+        #     else:
+        #         self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+        #         self._image = cv2.resize(self._image, (800,600), interpolation=self._interpolation_list[self._interpolation_index])
+        #     self._image = cv2.flip(self._image, 1)
+        #     if self.filter_image:
 
-
-
-
-
-
-
-
-    # def _process_raw_image(self):
-    #     """Process the raw temp data to a colored image. Filter if necessary"""
-    #     # Image processing
-    #     # Can't apply colormap before ndimage, so reversed in first two options, even though it seems slower
-    #     if self._interpolation_index==5:  # Scale via scipy only - slowest but seems higher quality
-    #         self._image = ndimage.zoom(self._raw_image,25)  # interpolate with scipy
-    #         self._image = cv2.applyColorMap(self._image, cmapy.cmap(self._colormap_list[self._colormap_index]))
-    #     elif self._interpolation_index==6:  # Scale partially via scipy and partially via cv2 - mix of speed and quality
-    #         self._image = ndimage.zoom(self._raw_image,10)  # interpolate with scipy
-    #         self._image = cv2.applyColorMap(self._image, cmapy.cmap(self._colormap_list[self._colormap_index]))
-    #         self._image = cv2.resize(self._image, (800,600), interpolation=cv2.INTER_CUBIC)
-    #     else:
-    #         self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
-    #         self._image = cv2.resize(self._image, (800,600), interpolation=self._interpolation_list[self._interpolation_index])
-    #     self._image = cv2.flip(self._image, 1)
-    #     if self.filter_image:
     
 
     def _process_raw_image(self):
@@ -142,7 +135,7 @@ class pithermalcam:
         else:
             self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
             self._image = cv2.resize(self._image, (800,600), interpolation=self._interpolation_list[self._interpolation_index])
-        
+
         self._image = cv2.cvtColor(self._image, cv2.COLOR_BGR2BGRA)
         self._image[:, :, 3] = np.where(self._raw_image == 0, 0, 225)
         self._image = cv2.flip(self._image, 1)

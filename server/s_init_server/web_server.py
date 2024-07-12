@@ -4,10 +4,23 @@
 # Flask web server for MLX90640 Thermal Camera w Raspberry Pi
 # If running directly, run from root folder, not pithermalcam folder
 ##################################
-try:  # If called as an imported module
-	from pithermalcam import pithermalcam
-except:  # If run directly
-	from pi_therm_cam import pithermalcam
+
+# try:  # If called as an imported module
+# 	from pithermalcam import pithermalcam
+# except:  # If run directly
+# 	from pi_therm_cam import pithermalcam
+import sys
+import os
+
+custom_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '/home/test/CamStream/set_up/'))
+
+try:
+    import pithermalcam
+except ImportError:
+    # if import fails, add custom path and try importing again
+    sys.path.insert(0, custom_path)
+    import pithermalcam
+
 from flask import Response, request
 from flask import Flask
 from flask import render_template
