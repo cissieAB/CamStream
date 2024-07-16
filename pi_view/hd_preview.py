@@ -18,6 +18,7 @@ camera_running = False
 preview_on = False
 configured = False
 config = picam2.create_preview_configuration()
+capture_config = picam2.create_still_configuration()
 
 
 # config = picam2.create_preview_configuration()
@@ -95,8 +96,6 @@ def hd_cam_on():
 	i = 1
 
 
-	
-
 def hd_settings():
 	global camera_running
 	global picam2
@@ -152,18 +151,26 @@ def exit():
 	picam2.stop()
 	picam2.close()
 	
-	
+	# picam2=Picamera2()picam2.start(show_preview=True)picam2.set_controls({"AfMode":controls.AfModeEnum.Continuous})
 
 def main():
 	global camera_running
 	global picam2
 	global preview_on
 	global configured
-
+	p = 0
 	while True:
 		command = input("Enter 'c' to toggle camera, 's' for settings, 'q' to quit: ").strip().lower()
 		if command == 'c':
 			toggle_cam()
+			command = input("Enter 'p' to capture picture or 'b' to go back: ").strip().lower()
+			if command == 'p':
+				still_config = picam2.create_still_configuration()
+				picam2.switch_mode_and_capture_file(still_config, "chessboard{p}.jpg", wait=False)
+				p += 1
+			if command == 'b' or 'esc':
+				return
+
 		
 		elif command == 's':
 			hd_settings()

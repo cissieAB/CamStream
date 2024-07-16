@@ -13,8 +13,7 @@ def _show_processed_image(ptc):
         cv2.imshow('Thermal Image', ptc._image)
 
         output_folder = '/home/pi/PiThermalCam/saved_snapshots/'
-
-    thermcam = pithermalcam(output_folder=output_folder) 
+        thermcam = ptc(output_folder=output_folder) 
 
 def blend_images(picam2_image, thermal_image):
     """Blend two images"""

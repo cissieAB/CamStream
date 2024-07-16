@@ -281,12 +281,23 @@ class pithermalcam:
         self._file_saved_notification_start = time.monotonic()
         print('Thermal Image ', fname)   
       
-    def _temps_to_rescaled_units(self,f, Tmin, Tmax):   
-        """ Function to convert temperatures to pixels on image"""
-        f=np.nan_to_num(f)
-        norm = np.uint8((f - Tmin)*255/(Tmax-Tmin))
-        norm.shape = (24,32)
+    # def _temps_to_rescaled_units(self,f, Tmin, Tmax):   
+    #     """ Function to convert temperatures to pixels on image"""
+    #     f=np.nan_to_num(f)
+    #     norm = np.uint8((f - Tmin)*255/(Tmax-Tmin))
+    #     norm.shape = (24,32)
+    #     return norm
+    
+
+    def _temps_to_rescaled_uints(self, f, Tmin, Tmax, new_min=20, new_max=80):
+        """Function to convert temperatures to pixels on image, scaled to new_min and new_max"""
+        f = np.nan_to_num(f)  # Handle NaNs in the data
+        norm = (f - Tmin) * (new_max - new_min) / (Tmax - Tmin) + new_min  # Scale to new range
+        norm = np.clip(norm, new_min, new_max)  # Clip values to ensure they stay within the new range
+        norm = np.uint8((norm - new_min) * 255 / (new_max - new_min))  # Normalize to 0-255
+        norm.shape = (24, 32)  # Reshape to match camera's grid size
         return norm
+
         
         # """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius 
         # and set values below a threshold to be fully transparent."""
@@ -309,7 +320,7 @@ class pithermalcam:
         # norm[f == -1] = 0
         # norm.shape(24,32)
 
-        return norm
+        # return norm
     
 
     def display_camera_onscreen(self):
