@@ -3,6 +3,9 @@ from picamera2 import Picamera2, Preview
 import time
 from pprint import *
 import keyboard
+import os
+import io
+import cv2
 #from hd_settings import config
 
 
@@ -19,34 +22,13 @@ preview_on = False
 configured = False
 config = picam2.create_preview_configuration()
 capture_config = picam2.create_still_configuration()
+# File to store the current image number
+image_number_file = 'image_number.txt'
 
-
-# config = picam2.create_preview_configuration()
-# main: Any = {},
-# lores: Any | None = None,
-# raw: Any = {},
-# transform: Any = libcamera.Transform(),
-# colour_space: Any = libcamera.ColorSpace.Sycc(),
-# buffer_count: int = 4,
-# controls: Any = {},
-# display: str = "main",
-# encode: str = "main",
-# queue: bool = True,
-# sensor: Any = {},
-# use_case: str = "preview"
-# {'use_case': 'preview', 
-# 'transform': <libcamera.Transform 'identity'>, 
-# 'colour_space': <libcamera.ColorSpace 'sYCC'>, 
-# 'buffer_count': 4, 
-# 'queue': True, 
-# 'main': {'format': 'XBGR8888', 'size': (640, 480)}, 
-# 'lores': None, 
-# 'raw': {'format': 'SRGGB12_CSI2P', 'size': (640, 480)}, 
-
-# 'controls': {'NoiseReductionMode': <NoiseReductionModeEnum.Minimal: 3>, 
-# 			'FrameDurationLimits': (100, 83333)}, 'sensor': {}, 
-# 		'display': 'main', 'encode': 'main'}
-
+# Directory to save images
+save_directory = '/home/pi/test/CamStream/chessboard/hd_images'
+if not os.path.exists(save_directory):
+    os.makedirs(save_directory)
 
 
 def toggle_cam():
@@ -142,7 +124,52 @@ def hd_settings():
 			picam2.stop_preview()
 		picam2.stop()
 
+# Function to read the current image number from a file
+def read_image_number(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            return int(f.read().strip())
+    else:
+        return 0
 
+# Function to write the current image number to a file
+def write_image_number(file_path, number):
+    with open(file_path, 'w') as f:
+        f.write(str(number))
+
+def capture_image():
+	global current_image_number
+
+	# Create an in-memory byte stream
+	data = io.BytesIO()
+
+	# Capture an image and write it to the byte stream in JPEG format
+	picam2.capture_file(data, format='jpeg')
+
+	# Move the cursor of the byte stream to the beginning
+	data.seek(0)
+
+	# Read the image data from the byte stream
+	image_data = np.frombuffer(data.read(), dtype=np.uint8)
+
+	# Decode the image data to a NumPy array
+	image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+
+	# Increment the image number
+	current_image_number += 1
+
+	# Generate filename
+	filename = os.path.join(save_directory, f'chessboard{current_image_number}.png')
+
+	# Save the image
+	cv2.imwrite(filename, image)
+	print(f'Saved {filename}')
+
+	# Update the image number file
+	write_image_number(image_number_file, current_image_number)
+
+	# Capture an image
+	
 def exit():
 	global i, camera_running, picam2, preview_on
 	print(" Exiting")
@@ -150,7 +177,7 @@ def exit():
 		picam2.stop_preview()
 	picam2.stop()
 	picam2.close()
-	
+
 	# picam2=Picamera2()picam2.start(show_preview=True)picam2.set_controls({"AfMode":controls.AfModeEnum.Continuous})
 
 def main():
@@ -158,16 +185,25 @@ def main():
 	global picam2
 	global preview_on
 	global configured
-	p = 0
+	
 	while True:
 		command = input("Enter 'c' to toggle camera, 's' for settings, 'q' to quit: ").strip().lower()
 		if command == 'c':
-			toggle_cam()
 			command = input("Enter 'p' to capture picture or 'b' to go back: ").strip().lower()
+			toggle_cam()
+						
 			if command == 'p':
-				still_config = picam2.create_still_configuration()
-				picam2.switch_mode_and_capture_file(still_config, "chessboard{p}.jpg", wait=False)
-				p += 1
+				
+				picam2.stop_preview()
+				# Configure the camera for still image capture
+				picam2.configure(picam2.create_still_configuration())
+				picam2.start()
+				time.sleep(1)
+				capture_image()
+				time.sleep(1)
+				toggle_cam()
+
+
 			if command == 'b' or 'esc':
 				return
 
