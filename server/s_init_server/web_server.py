@@ -5,21 +5,61 @@
 # If running directly, run from root folder, not pithermalcam folder
 ##################################
 
+
 # try:  # If called as an imported module
 # 	from pithermalcam import pithermalcam
 # except:  # If run directly
-# 	from pi_therm_cam import pithermalcam
+# 	from pithermalcam import pithermalcam
+
+# import sys
+# import os
+
+# custom_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'home/test/CamStream/set_up/pi_therm_cam_test.py'))
+
+# try: 
+# 	import pithermalcam
+# except ImportError:
+#     # if import fails, add custom path and try importing again
+#     sys.path.insert(0, custom_path)
+#     import pithermalcam
+
+
+import importlib
 import sys
-import os
 
-custom_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '/home/test/CamStream/set_up/'))
+class ExcludeModuleFinder(importlib.abc.MetaPathFinder):
+    def __init__(self, exclude_module):
+        self.exclude_module = exclude_module
 
+    def find_spec(self, fullname, path, target=None):
+        if fullname == self.exclude_module:
+            raise ImportError(f"Module {self.exclude_module} is excluded.")
+        return None
+
+# Add the custom import hook to sys.meta_path
+exclude_module = 'pithermalcam.pi_therm_cam'  # Replace with the module you want to exclude
+sys.meta_path.insert(0, ExcludeModuleFinder(exclude_module))
+
+# Now, attempt to import the library
 try:
-    import pithermalcam
-except ImportError:
-    # if import fails, add custom path and try importing again
-    sys.path.insert(0, custom_path)
-    import pithermalcam
+    import pithermalcam.pi_therm_cam
+except ImportError as e:
+    print(e)
+
+# Import the rest of the library
+import pithermalcam  # Import the rest of the library
+
+# Test to see if the module is excluded
+try:
+    import pithermalcam.pi_therm_cam
+except ImportError as e:
+    print("Successfully excluded module:", e)
+
+# Use your custom module in place of the excluded one
+import your_custom_pi_therm_cam as pi_therm_cam
+
+# Rest of your code
+# Now you can use pi_therm_cam instead of pithermalcam.pi_therm_cam
 
 from flask import Response, request
 from flask import Flask
@@ -27,6 +67,7 @@ from flask import render_template
 import threading
 import time, socket, logging, traceback
 import cv2
+
 
 # Set up Logger
 logging.basicConfig(filename='pithermcam.log',filemode='a',

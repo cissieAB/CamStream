@@ -86,11 +86,11 @@ class pithermalcam:
         self._raw_image = np.zeros((24*32,))
         try:
             self.mlx.getFrame(self._raw_image)  # read mlx90640
-            self._temp_min = 20   # change to adjust color scale on the image 
-            self._temp_max = 38
+            # self._temp_min = 20   # change to adjust color scale on the image 
+            # self._temp_max = 38
             #original adaptive scaling 
-            #self._temp_min = np.min(self._raw_image)
-            #self._temp_max = np.max(self._raw_image)
+            self._temp_min = np.min(self._raw_image)
+            self._temp_max = np.max(self._raw_image)
             self._raw_image=self._temps_to_rescaled_units(self._raw_image,self._temp_min,self._temp_max)
             self._current_frame_processed=False  # Note that the newly updated raw frame has not been processed
         except ValueError:
@@ -280,23 +280,19 @@ class pithermalcam:
         cv2.imwrite(fname, self._image)
         self._file_saved_notification_start = time.monotonic()
         print('Thermal Image ', fname)   
-      
-    # def _temps_to_rescaled_units(self,f, Tmin, Tmax):   
-    #     """ Function to convert temperatures to pixels on image"""
-    #     f=np.nan_to_num(f)
-    #     norm = np.uint8((f - Tmin)*255/(Tmax-Tmin))
-    #     norm.shape = (24,32)
-    #     return norm
-    
 
-    def _temps_to_rescaled_uints(self, f, Tmin, Tmax, new_min=20, new_max=80):
-        """Function to convert temperatures to pixels on image, scaled to new_min and new_max"""
-        f = np.nan_to_num(f)  # Handle NaNs in the data
-        norm = (f - Tmin) * (new_max - new_min) / (Tmax - Tmin) + new_min  # Scale to new range
-        norm = np.clip(norm, new_min, new_max)  # Clip values to ensure they stay within the new range
-        norm = np.uint8((norm - new_min) * 255 / (new_max - new_min))  # Normalize to 0-255
-        norm.shape = (24, 32)  # Reshape to match camera's grid size
+    def _temps_to_rescaled_uints(self,f,Tmin,Tmax):
+        """Function to convert temperatures to pixels on image"""
+        scale_min=25 # currently set for seeing humans in room temperature 
+        scale_max=36 # room temp is min, target is max
+        scale_range = (scale_max - scale_min)
+        
+        f=np.nan_to_num(f)
+        norm = np.clip(f,scale_min,scale_max)
+        norm = np.uint8((norm-scale_min)*255/(scale_range))
+        norm.shape = (24,32)
         return norm
+       
 
         
         # """Convert temperatures to pixel values scaled to a fixed range of 20 to 60 degrees Celsius 
