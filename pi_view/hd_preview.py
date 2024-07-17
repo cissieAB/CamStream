@@ -6,6 +6,7 @@ import keyboard
 import os
 import io
 import cv2
+import numpy as np
 #from hd_settings import config
 
 
