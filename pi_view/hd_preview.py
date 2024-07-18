@@ -1,5 +1,6 @@
 
 from picamera2 import Picamera2, Preview
+# import libcamera
 import time
 from pprint import *
 import keyboard
@@ -15,44 +16,17 @@ global picam2
 global preview_on
 global configured
 global i
-i=0
+i = 0
+
 
 picam2 = Picamera2()
 camera_running = False
 preview_on = False
 configured = False
 config = picam2.create_preview_configuration()
-capture_config = picam2.create_still_configuration()
-# File to store the current image number
-image_number_file = 'image_number.txt'
 
-# Directory to save images
 save_directory = '/home/pi/test/CamStream/chessboard/hd_images'
-if not os.path.exists(save_directory):
-    os.makedirs(save_directory)
 
-
-def toggle_cam():
-	global i, camera_running, picam2, preview_on
-	try:
-		if i == 0:
-			hd_cam_on()
-			i = 1
-
-		elif i == 1:
-			hd_cam_off()
-			i = 0
-
-		else:
-			print(f"i Error")
-			return
-
-	except RuntimeError as e:
-		camera_running == True
-		print(f"Error: {e}")
-		if preview_on == True:
-			picam2.stop_preview()
-		picam2.stop()
 
 def hd_cam_off():
 	global i, camera_running, picam2, preview_on
@@ -70,22 +44,46 @@ def hd_cam_on():
 		time.sleep(1)
 
 	if preview_on == False:
-			picam2.start_preview(Preview.QTGL)
-			preview_on = True
+		picam2.start_preview(Preview.QTGL)
+		preview_on = True
 
 	if camera_running == False:
 		picam2.start()
 		camera_running = True
 	i = 1
 
+def toggle_cam():
+	global i, camera_running, picam2, preview_on, configured, config
+	try:
+		if configured == False:
+			picam2.configure(config)
+			configured = True
+			time.sleep(1)
+
+		#turn on		
+		if i == 0:
+			hd_cam_on()
+			return
+			
+		elif i == 1:
+			hd_cam_off()
+			i = 0
+			return
+
+		else:
+			print(f"i Error")
+			return
+
+	except RuntimeError as e:
+		camera_running == True
+		print(f"Error: {e}")
+		if preview_on == True:
+			picam2.stop_preview()
+		picam2.stop()
 
 def hd_settings():
-	global camera_running
-	global picam2
-	global preview_on
-	global configured
-	config = picam2.create_preview_configuration()
-	
+	global camera_running, picam2, preview_on,configured,config
+
 	try: 
 		if configured:
 			print(config['main'])
@@ -112,7 +110,7 @@ def hd_settings():
 				time.sleep(1)
 				pprint(picam2.sensor_modes)
 
-		if command == 'b' or 'esc':
+		elif command == 'b' or 'esc':
 			return
 		
 		else:
@@ -125,52 +123,23 @@ def hd_settings():
 			picam2.stop_preview()
 		picam2.stop()
 
-# Function to read the current image number from a file
-def read_image_number(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as f:
-            return int(f.read().strip())
-    else:
-        return 0
-
-# Function to write the current image number to a file
-def write_image_number(file_path, number):
-    with open(file_path, 'w') as f:
-        f.write(str(number))
-
 def capture_image():
-	global current_image_number
 
-	# Create an in-memory byte stream
-	data = io.BytesIO()
-
-	# Capture an image and write it to the byte stream in JPEG format
-	picam2.capture_file(data, format='jpeg')
-
-	# Move the cursor of the byte stream to the beginning
-	data.seek(0)
-
-	# Read the image data from the byte stream
-	image_data = np.frombuffer(data.read(), dtype=np.uint8)
-
-	# Decode the image data to a NumPy array
-	image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
-
-	# Increment the image number
-	current_image_number += 1
-
-	# Generate filename
-	filename = os.path.join(save_directory, f'chessboard{current_image_number}.png')
-
-	# Save the image
-	cv2.imwrite(filename, image)
-	print(f'Saved {filename}')
-
-	# Update the image number file
-	write_image_number(image_number_file, current_image_number)
-
-	# Capture an image
+	# find amount of files in folder and name new pic in succsession
+	f = os.listdir(save_directory)
+	current_number = len(f) +1
+	filename = save_directory + "/no" + str(current_number) +".jpg"
 	
+	#set up for capture
+	capture_config = picam2.create_still_configuration()
+	picam2.switch_mode_and_capture_file(capture_config, filename)
+	
+	# need to crop image size to managable level
+	
+	print("YAY GO HOME")
+	print('Image saved to: ',filename)
+
+
 def exit():
 	global i, camera_running, picam2, preview_on
 	print(" Exiting")
@@ -179,36 +148,26 @@ def exit():
 	picam2.stop()
 	picam2.close()
 
-	# picam2=Picamera2()picam2.start(show_preview=True)picam2.set_controls({"AfMode":controls.AfModeEnum.Continuous})
-
+	
 def main():
 	global camera_running
 	global picam2
 	global preview_on
 	global configured
-	
+	global config
+	c = False
 	while True:
-		command = input("Enter 'c' to toggle camera, 's' for settings, 'q' to quit: ").strip().lower()
+		command = input("Enter 'c' to toggle camera, 'p' to capture picture, 's' for settings, 'q' to quit: ").strip().lower()
 		if command == 'c':
-			command = input("Enter 'p' to capture picture or 'b' to go back: ").strip().lower()
 			toggle_cam()
-						
-			if command == 'p':
-				
-				picam2.stop_preview()
-				# Configure the camera for still image capture
-				picam2.configure(picam2.create_still_configuration())
-				picam2.start()
-				time.sleep(1)
-				capture_image()
-				time.sleep(1)
+			c = True
+
+		elif command == 'p':
+			if c == False:
 				toggle_cam()
-
-
-			if command == 'b' or 'esc':
-				return
-
-		
+			time.sleep(1)
+			capture_image()
+						
 		elif command == 's':
 			hd_settings()
 			
@@ -216,8 +175,8 @@ def main():
 			exit()
 			break
 
-		else:
-			print("Wrong input, try 'c' to toggle, 's' see setting, or 'q' to quit").strip().lower()
+		# elif command not in ['c', 'p', 's','q', KeyboardInterrupt]:
+		# 	print("Wrong input, try 'c' to toggle, 's' see setting, or 'q' to quit")
 
 
 
