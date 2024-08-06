@@ -1,5 +1,5 @@
 # CamStream Settings
-Display of all the settings available for this project <br />
+###Display of all the settings available for this project <br />
 
 Output from side_by_side.py 
 ![side_by_side.py output ](images/sidebyside.jpg)
