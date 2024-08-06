@@ -2,7 +2,7 @@
 
 ## Env Setup
 On Raspberry PI, after cloning this repo, setup a Python virtual environment at the root.
-```bash
+```
 ## Bash 
 $ python3 -m venv .venv   # setup a Python virtual environment whose name is ".venv". Use `ls -a` to find the .venv repo
 $ source .venv/bin/activate  # activate the virtual environment
