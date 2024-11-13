@@ -42,7 +42,7 @@ Once you have all the Python dependency ready, follow the below steps to set up 
         - Replace `matplotlib.cm.get_cmap()` with `matplotlib.pyplot.get_cmap()`;
         - At the top of the file, add `import matplotlib.pyplot`.
       - [Optional] Update `adafruit_mlx90640.py`:
-        - Line 160: Replace `if cnt > 4` to if `cnt > 400`.
+        - Line 160: Replace `if cnt > 4` to `if cnt > 400`.
 
     B. Run the camera test to check if there is any error.
 
