@@ -161,6 +161,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# Running Jupyter Notebook dependencies
 opencv/
 
+# Ignore all .jpg files
 *.jpg
+
+# Include .jpg files in the images subfolder
+!images/*.jpg
