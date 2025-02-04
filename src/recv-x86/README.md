@@ -25,4 +25,5 @@ recv-x86/                       # Current dir
 
 ---
 ### TODOS:
-- Explore Flask-SocketIO instead of raw Flask as the backend for higher streaming speed.
+- [] Update the emu backend from SSE response to normal JSON response.
+- [] Explore Flask-SocketIO instead of raw Flask as the backend for higher streaming speed. It's only needed when Flask-SocketIO is proved to be faster than current solution.
