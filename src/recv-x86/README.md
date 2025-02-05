@@ -18,12 +18,12 @@ recv-x86/                       # Current dir
 │── requirements.txt            # List of dependencies
 ```
 
+#### Runnning steps
 - Start an emulator to send the simulated raw temperature data:
     ```bash
-    python3 emu_sender/thermal_emu_app.py &  # default address is localhost:8083/raw_frame
+    python3 emu_sender/thermal_emu_app.py  # default address is localhost:8083
     ```
-
----
-### TODOS:
-- [] Update the emu backend from SSE response to normal JSON response.
-- [] Explore Flask-SocketIO instead of raw Flask as the backend for higher streaming speed. It's only needed when Flask-SocketIO is proved to be faster than current solution.
+- In another terminal, start the real receiver:
+    ```bash
+    python3 app.py &  # default address is localhost:5000
+    ```
