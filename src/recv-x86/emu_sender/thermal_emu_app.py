@@ -1,21 +1,31 @@
 """
-An emulator to send 32x24 raw temperature frames (in Celcius) at 4 FPS (frame per second).
-Expose at localhost:5001/raw_frame using SSE (portal keeps openning).
+An emulator to send 32x24 raw temperature arrays (in Celcius).
+Expose at localhost:5001/raw_frame using Flask SocketIO to achieve high speed.
 """
 
+import io
 import time
-import json
 
-from flask import Flask, Response
+from flask import Flask
+from flask_socketio import SocketIO
 import numpy as np
 
 
-THERMAL_FRAME_SHAPE = 768   # width 32 x height 24
-SLEEP_INTERVAL = 2    # in seconds. FPS = 1/SLEEP_INTERVAL
+THERMAL_FRAME_SHAPE = (768, )   # Tuple. width 32 x height 24
+SLEEP_INTERVAL = 1    # in seconds. FPS = 1/SLEEP_INTERVAL
+
+EMU_TEMP_MEAN = 25.0
+EMU_TEMP_STD = 2.0
+
+SIO_API_NAME = "request_thermal"
+SIO_NAMESPACE = "/thermal"
 
 app = Flask(__name__)
+ # Enable WebSocket. NOTE: logger can be removed later.
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
-def generate_fake_thermal_data(temp_mean=25, temp_std=2):
+
+def generate_fake_thermal_data(temp_mean=EMU_TEMP_MEAN, temp_std=EMU_TEMP_STD):
     """Generates a 32x24 matrix of simulated temperature data (in Celsius)."""
     emu_thermal_data = np.around(
         np.random.normal(loc=temp_mean, scale=temp_std, size=THERMAL_FRAME_SHAPE),
@@ -23,27 +33,25 @@ def generate_fake_thermal_data(temp_mean=25, temp_std=2):
     )
     return emu_thermal_data
 
-def generate_thermal_stream():
-    """"Generate thermal frames 4 times per second (SSE streaming)."""
-    # Sample response
-    # data: {"timestamp": 1738700660.5725446, "temperature_data": [23.  26.4 21.  ...]}
+
+@socketio.on(SIO_API_NAME)
+def send_emu_thermal():
+    """"Generate thermal frames with the desired FPS."""
 
     while True:
-        # Simulate a 32x32 thermal camera frame with values between 20-40°C
-        temperature_data = generate_fake_thermal_data()
+        # Simulate a 32x32 thermal camera frame with values between 20-40°C.
+        thermal_data = generate_fake_thermal_data()
         timestamp = time.time()
 
-        # SSE format: Prefix with "data: " and separate messages with `\n\n`
-        event_data = f"data: {json.dumps({'timestamp': timestamp, 'temperature_data': temperature_data.tolist()})}\n\n"
+        # Serialize data
+        buf = io.BytesIO()
+        np.save(buf, thermal_data)
+        buf.seek(0)
 
-        yield event_data
+        # Send data as binary over WebSocket.
+        socketio.emit("thermal_data",
+                      {"timestamp": timestamp, "data": buf.getvalue()})
         time.sleep(SLEEP_INTERVAL)
 
-
-@app.route('/raw_frame')
-def raw_frame():
-    """Streams raw temperature data at 4 FPS using Server-Sent Events (SSE)."""
-    return Response(generate_thermal_stream(), content_type='text/event-stream')
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8083, threaded=True)
+    socketio.run(app, host='0.0.0.0', port=8083)
