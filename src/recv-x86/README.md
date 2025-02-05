@@ -25,5 +25,5 @@ recv-x86/                       # Current dir
     ```
 - In another terminal, start the real receiver:
     ```bash
-    python3 app.py &  # default address is localhost:5000
+    python3 app.py  # default address is localhost:5000
     ```
