@@ -9,7 +9,7 @@ import numpy as np
 
 import socketio
 
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, send_file
 
 app = Flask(__name__)
 sio = socketio.Client()
@@ -53,7 +53,7 @@ def receive_thermal(data):
 
     try:
         raw_bytes = data["data"]
-        timestamp = data["timestamp"]
+        timestamp = data["timestamp"]   # TODO: deal with timestamp
 
         if isinstance(raw_bytes, str):
             raw_bytes = raw_bytes.encode("latin1")  # Convert string to bytes
@@ -155,17 +155,15 @@ def video_feed():
     """Serve the GUI "video_field" endpoint."""
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
+@app.route('/display_image')
+def display_image():
+    """Serve the demo image."""
+    return send_file("./images/demo.jpeg", mimetype='image/jpeg')
+
 @app.route('/')
 def index():
     return render_template('index.html')
-
-# @app.route('/start', methods=['POST'])
-# def start_processing():
-#     return jsonify({"message": "Processing started"}), 200
-
-# @app.route('/stop', methods=['POST'])
-# def stop_processing():
-#     return jsonify({"message": "Processing stopped"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
